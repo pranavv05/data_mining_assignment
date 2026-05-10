@@ -43,6 +43,7 @@ SkillGraph is a resume intelligence application for ranking candidates against a
   - searchable JD picker using shadcn Command + Popover
   - resume input and candidate queue
   - rank action with loading overlay
+  - automatic saved ranking sessions with restore from Home
   - character/HUD panel with safe placeholder if `public/model.glb` is missing
 
 - Rankings view:
@@ -115,7 +116,7 @@ Vite rewrites `/api/*` to the backend at `http://localhost:8000`.
 ## Suggested Remaining Work
 
 - Add a real `frontend/public/model.glb` character model.
-- Add persistent storage for ranked sessions and candidate uploads.
+- Add database-backed multi-user session storage.
 - Add a dedicated results page for exporting rankings.
 - Improve compare view with domain-aware skill coloring from backend metadata.
 - Add authentication if this is deployed beyond local demo use.

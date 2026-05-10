@@ -16,6 +16,7 @@ frontend/dist/
 *.log
 backend-server.*.log
 frontend/vite-dev.*.log
+backend/data/ranking_sessions.json
 
 # OS / editor
 .DS_Store

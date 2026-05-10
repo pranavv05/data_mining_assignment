@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { gsap } from "gsap";
 import { Command as CommandIcon, GitCompare, GitFork, Hexagon, Home, Trophy } from "lucide-react";
 
@@ -136,16 +137,58 @@ export default function App() {
   const [rankPayload, setRankPayload] = useState(null);
   const [graphCandidate, setGraphCandidate] = useState(null);
   const [compareCandidates, setCompareCandidates] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const contentRef = useRef(null);
+
+  useEffect(() => {
+    refreshSessions();
+  }, []);
 
   useEffect(() => {
     if (!contentRef.current) return;
     gsap.fromTo(contentRef.current, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.45, ease: "power2.out" });
   }, [view]);
 
+  async function refreshSessions() {
+    try {
+      const response = await axios.get("/api/sessions");
+      setSessions(response.data?.sessions ?? []);
+    } catch (error) {
+      console.error("Failed to load /api/sessions", error);
+    }
+  }
+
+  async function loadSession(sessionId) {
+    try {
+      const response = await axios.get(`/api/sessions/${sessionId}`);
+      const session = response.data?.session;
+      if (!session) return;
+      setRankPayload({
+        result: session.result,
+        selectedJob: {
+          job_title: session.selected_job?.job_title ?? "",
+          job_skill_set: session.selected_job?.job_skill_set ?? "",
+        },
+        session,
+      });
+      setGraphCandidate(null);
+      setCompareCandidates([]);
+      setView("rankings");
+    } catch (error) {
+      console.error(`Failed to load /api/sessions/${sessionId}`, error);
+    }
+  }
+
   function renderCurrentView() {
     if (view === "home") {
-      return <HomeView onRanked={setRankPayload} />;
+      return (
+        <HomeView
+          onRanked={setRankPayload}
+          sessions={sessions}
+          onLoadSession={loadSession}
+          onSessionSaved={refreshSessions}
+        />
+      );
     }
 
     if (view === "rankings") {

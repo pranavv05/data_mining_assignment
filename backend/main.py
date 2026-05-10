@@ -1,7 +1,10 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+import json
 import time
 from pathlib import Path
 import sys
+from uuid import uuid4
 
 import networkx as nx
 import pandas as pd
@@ -18,6 +21,7 @@ from backend.ranking import rank_candidates, _flatten
 from backend.gap import get_grade_skill_profiles, compute_gap
 
 DATA = Path(__file__).parent / "data"
+SESSIONS_FILE = DATA / "ranking_sessions.json"
 
 # ── proficiency scenarios ─────────────────────────────────────────────────────
 
@@ -59,6 +63,39 @@ _GENERIC = {
     "question":     "Describe a real situation where you applied {skill} to solve a non-trivial problem. What was the context, your approach, and the result?",
     "pass_criteria": "Includes a specific problem context, concrete steps using {skill}, measurable or observable outcomes, and trade-offs considered.",
 }
+
+
+def _read_sessions() -> list[dict]:
+    if not SESSIONS_FILE.exists():
+        return []
+    try:
+        return json.loads(SESSIONS_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+
+
+def _write_sessions(sessions: list[dict]) -> None:
+    SESSIONS_FILE.write_text(json.dumps(sessions, indent=2), encoding="utf-8")
+
+
+def _session_summary(session: dict) -> dict:
+    ranked = session.get("result", {}).get("ranked", [])
+    return {
+        "id": session["id"],
+        "created_at": session["created_at"],
+        "job_title": session.get("selected_job", {}).get("job_title", ""),
+        "candidate_count": len(ranked),
+        "top_candidate_id": ranked[0].get("candidate_id", "") if ranked else "",
+        "top_score": ranked[0].get("final_score", 0) if ranked else 0,
+    }
+
+
+def _hydrate_skill_cache(app: FastAPI, ranked: list[dict]) -> None:
+    for candidate in ranked:
+        candidate_id = candidate.get("candidate_id")
+        skills = candidate.get("all_skills")
+        if candidate_id and isinstance(skills, list):
+            app.state.skill_cache[candidate_id] = skills
 
 
 # ── lifespan: load everything once ───────────────────────────────────────────
@@ -160,6 +197,15 @@ class GraphRequest(BaseModel):
 class ProficiencyRequest(BaseModel):
     skill: str
 
+class SelectedJob(BaseModel):
+    job_title: str
+    job_skill_set: str
+
+class SaveSessionRequest(BaseModel):
+    selected_job: SelectedJob
+    resumes: list[ResumeInput]
+    result: dict
+
 
 # ── endpoints ─────────────────────────────────────────────────────────────────
 
@@ -202,6 +248,41 @@ def rank(req: RankRequest):
 
     merged = [{**r, "gap": g} for r, g in zip(ranked, gaps)]
     return {"ranked": merged}
+
+
+@app.post("/sessions")
+def save_session(req: SaveSessionRequest):
+    ranked = req.result.get("ranked", [])
+    if not ranked:
+        raise HTTPException(status_code=400, detail="result.ranked is required")
+
+    session = {
+        "id": uuid4().hex,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "selected_job": req.selected_job.dict(),
+        "resumes": [resume.dict() for resume in req.resumes],
+        "result": req.result,
+    }
+
+    sessions = _read_sessions()
+    sessions.insert(0, session)
+    _write_sessions(sessions[:25])
+    _hydrate_skill_cache(app, ranked)
+    return {"session": _session_summary(session)}
+
+
+@app.get("/sessions")
+def list_sessions():
+    return {"sessions": [_session_summary(session) for session in _read_sessions()]}
+
+
+@app.get("/sessions/{session_id}")
+def get_session(session_id: str):
+    for session in _read_sessions():
+        if session["id"] == session_id:
+            _hydrate_skill_cache(app, session.get("result", {}).get("ranked", []))
+            return {"session": session}
+    raise HTTPException(status_code=404, detail="session not found")
 
 
 @app.post("/graph")

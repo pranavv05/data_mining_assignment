@@ -47,7 +47,7 @@ export default function ResumeUpload({ selectedJob, onRanked }) {
         resumes: candidates,
         jd_skill_string: selectedJob.job_skill_set,
       });
-      onRanked?.(response.data);
+      onRanked?.(response.data, { candidates });
     } catch (error) {
       console.error("Failed to post /api/rank", error);
       setMessage("RANKING_PROCESS_FAILED");
