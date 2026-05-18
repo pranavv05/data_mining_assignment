@@ -2,24 +2,26 @@
 
 SkillGraph is a resume intelligence application for ranking candidates against a selected job description. It combines skill extraction, graph-based scoring, gap analysis, and a dark RPG-terminal style React interface.
 
-## Current Features
+## Features
 
 ### Backend API
 
-- FastAPI backend in `backend/main.py`.
-- Loads job descriptions, resume datasets, skill taxonomy, and graph data at startup.
-- `GET /jd_list`: returns job descriptions for the frontend JD picker.
-- `POST /rank`: ranks submitted resumes against a selected JD skill string.
-- `POST /graph`: returns a candidate skill ego graph after ranking.
-- `POST /proficiency`: returns a scenario-based diagnostic question for a skill.
+FastAPI backend in `backend/main.py`. Loads job descriptions, resume datasets, skill taxonomy, and graph data at startup.
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/jd_list` | GET | Returns job descriptions for the JD picker |
+| `/rank` | POST | Ranks submitted resumes against a selected JD |
+| `/graph` | POST | Returns a candidate skill ego graph after ranking |
+| `/proficiency` | POST | Returns a scenario-based diagnostic question for a skill |
+| `/sessions` | POST | Saves a ranking session (keeps last 25) |
+| `/sessions` | GET | Lists all saved session summaries |
+| `/sessions/{session_id}` | GET | Retrieves a specific session with full ranking data |
 
 ### Ranking Engine
 
 - Extracts skills from resume text and JD skill strings.
-- Scores candidates using:
-  - semantic similarity
-  - graph distance
-  - propagation score
+- Scores candidates using semantic similarity, graph distance, and propagation score.
 - Assigns grades `A/B/C/D` by percentile.
 - Returns matched skills, missing skills, dominant signal, score breakdown, and candidate skill inventory.
 
@@ -32,45 +34,49 @@ SkillGraph is a resume intelligence application for ranking candidates against a
 
 ### Frontend
 
-- React + Vite frontend in `frontend/`.
-- Tailwind CSS v4 with shadcn UI components.
-- Dark-mode data intelligence UI using Outfit and Space Mono fonts.
-- Vite proxy configured so frontend API calls use `/api/*`.
+React + Vite frontend in `frontend/`. Tailwind CSS v4 with shadcn UI components. Dark-mode data intelligence UI using Outfit and Space Mono fonts. Vite proxy configured so frontend API calls use `/api/*`.
 
-### Frontend Screens
+## Application Routes
 
-- Home view:
-  - searchable JD picker using shadcn Command + Popover
-  - resume input and candidate queue
-  - rank action with loading overlay
-  - automatic saved ranking sessions with restore from Home
-  - character/HUD panel with safe placeholder if `public/model.glb` is missing
+- `/` — Landing page with product overview, architecture breakdown, and feature cards.
+- `/app` — Main application interface.
 
-- Rankings view:
-  - sorted candidate ranking cards
-  - grade accent bars
-  - match score progress
-  - semantic/distance/propagation signal bars
-  - acquired and missing skill chips
-  - compare selection with a maximum of two candidates
+## Frontend Views
 
-- Skill graph view:
-  - D3 force-directed skill graph
-  - JD match and missing skill styling
-  - zoom, pan, drag, tooltip
-  - gap panel with learning paths and skill diagnostics
+**Home view**
+- Searchable JD picker with category badges (Technology, HR, Finance, Sales, etc.) using shadcn Command + Popover.
+- Resume input with candidate queue management (add / remove candidates before ranking).
+- Rank action with loading overlay.
+- Saved ranking sessions panel with restore from Home.
+- Character HUD panel: level (1–10 based on score), animated hexagons, grade badge, score bar, and skill coverage percentage. Shows a safe placeholder if `public/model.glb` is missing.
 
-- Compare view:
-  - candidate A vs candidate B comparison
-  - unique/shared skill intersection
-  - recommendation verdict based on final score and strongest signal delta
+**Rankings view**
+- Sorted candidate ranking cards with grade accent bars.
+- Match score progress bar.
+- Semantic / distance / propagation signal bars.
+- Acquired and missing skill chips.
+- Compare selection with a maximum of two candidates.
+
+**Skill graph view**
+- D3 force-directed skill graph with domain color coding (ml, frontend, backend, devops, databases, soft_skills, algorithms, data_science).
+- JD-matched skills highlighted with white stroke; missing skills shown with red dashed outline.
+- Zoom, pan, drag, and tooltip interactions.
+- Gap panel with learning paths to the next grade.
+- Proficiency diagnostic modal: scenario-based question with text response input; 50+ character answer counts as a pass, with a confetti burst on success.
+
+**Compare view**
+- Candidate A vs. candidate B side-by-side comparison.
+- Skill intersection layout: unique to A / shared / unique to B.
+- Recommendation verdict based on final score and strongest signal delta.
 
 ## Tech Stack
 
-- Backend: Python, FastAPI, pandas, NetworkX, Pydantic
-- Frontend: React, Vite, Tailwind CSS, shadcn UI
-- Visualization: D3, Three.js, `@react-three/fiber`, `@react-three/drei`
-- Animation: GSAP, CSS animations
+- **Backend:** Python, FastAPI, pandas, NetworkX, Pydantic
+- **Frontend:** React 19, React Router 7, Vite 8, Tailwind CSS v4, shadcn UI
+- **Visualization:** D3 (force-directed graphs, zoom/pan)
+- **Animation:** GSAP (view transitions), CSS animations
+- **HTTP:** axios
+- **Icons:** lucide-react
 
 ## Running Locally
 
@@ -90,36 +96,21 @@ npm install
 npm run dev -- --port 5173
 ```
 
-Open:
-
-```text
-http://127.0.0.1:5173
-```
+Open `http://127.0.0.1:5173`.
 
 ## API Proxy
 
-The frontend calls:
+The Vite dev server rewrites `/api/*` to `http://localhost:8000`, so the frontend calls:
 
 - `/api/jd_list`
 - `/api/rank`
 - `/api/graph`
 - `/api/proficiency`
-
-Vite rewrites `/api/*` to the backend at `http://localhost:8000`.
+- `/api/sessions`
 
 ## Known Notes
 
-- `frontend/public/model.glb` is not included yet. The UI safely shows an `AWAITING_AGENT.glb` placeholder until that asset is added.
-- Vite may warn about large chunks because D3 and Three.js are bundled. This is not currently a runtime error.
+- `frontend/public/model.glb` is not included. The character HUD safely shows an `AWAITING_AGENT.glb` placeholder until that asset is added.
+- Vite may warn about large chunks because D3 is bundled. This is not a runtime error.
 - Backend startup may emit Hugging Face cache warnings depending on local cache permissions.
-
-## Suggested Remaining Work
-
-- Add a real `frontend/public/model.glb` character model.
-- Add database-backed multi-user session storage.
-- Add a dedicated results page for exporting rankings.
-- Improve compare view with domain-aware skill coloring from backend metadata.
-- Add authentication if this is deployed beyond local demo use.
-- Add automated backend tests for `/rank`, `/graph`, and `/proficiency`.
-- Add frontend tests for JD loading, candidate queueing, ranking, and compare selection.
-- Add route/deep-link support instead of state-only view switching.
+- Three.js, `@react-three/fiber`, and `@react-three/drei` are installed as dependencies for the planned 3D character model but are not currently used at runtime.
