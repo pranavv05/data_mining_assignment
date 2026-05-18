@@ -52,15 +52,15 @@ export default function GapPanel({ gap }) {
       </CardHeader>
       <CardContent className="max-h-[650px] space-y-3 overflow-y-auto p-4">
         {rows.length ? rows.map((item) => {
-          const skill = item.target_skill;
-          const color = domainColors[normalizeDomain(item.domain)];
+          const skill = typeof item === "string" ? item : (item.target_skill ?? item.name ?? "");
+          const color = domainColors[normalizeDomain(typeof item === "string" ? "default" : item.domain)];
           const path = Array.isArray(item.path) && item.path.length ? item.path : [skill];
           const passed = passedSkills.includes(skill);
 
           return (
             <div key={`${skill}-${path.join("-")}`} className="rounded-xl border border-[var(--border)] bg-[rgba(5,5,8,0.55)] p-4" style={{ borderLeft: `4px solid ${color}` }}>
               <div className="flex items-start justify-between gap-3">
-                <div className="font-mono text-sm text-white">{skill}</div>
+                <p className="font-mono text-sm text-white">{skill}</p>
                 {passed && <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--green)]">PASSED</span>}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">

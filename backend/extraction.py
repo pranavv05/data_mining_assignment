@@ -41,7 +41,7 @@ def extract_from_text(text: str) -> dict[str, list[str]]:
     Returns {domain: [matched_skills]}, domains with 0 matches omitted.
     """
     _init()
-    text_lower = text.lower()
+    text_lower = text.lower().replace('-', ' ')
     matched: dict[str, list[str]] = {}
     for skill in _all_skills:
         if _skill_patterns[skill].search(text_lower):

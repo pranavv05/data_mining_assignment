@@ -149,12 +149,39 @@ async def lifespan(app: FastAPI):
     grade_profiles      = get_grade_skill_profiles(baseline_ranked, baseline_G)
     print(f"[startup]   Grade profiles done  ({elapsed(t4)})")
 
+    tech_keywords = [
+        "software", "engineer", "developer",
+        "data", "machine learning", "devops",
+        "backend", "frontend", "fullstack",
+        "full stack", "python", "java", "cloud",
+        "infrastructure", "security", "mobile",
+        "ios", "android", "web", "api", "ml",
+        "ai", "artificial intelligence", "analyst",
+        "architect", "database", "network",
+        "systems", "product", "qa", "test",
+        "automation", "technology", "technical",
+        "information technology", "it ",
+    ]
+
+    mask = (
+        jobs["category"].str.lower().str.contains(
+            "technology|information technology|it|engineering|software|data|cloud",
+            na=False,
+        )
+        | jobs["job_title"].str.lower().str.contains(
+            "|".join(tech_keywords), na=False
+        )
+    )
+
+    tech_jobs = jobs[mask].copy()
+
     jd_list = (
-        jobs[["job_id", "job_title", "category", "job_skill_set"]]
+        tech_jobs[["job_id", "job_title", "category", "job_skill_set"]]
         .fillna("")
         .to_dict(orient="records")
     )
 
+    print(f"[startup] Loaded {len(jd_list)} tech JDs (filtered from {len(jobs)} total)")
     print(f"[startup] TOTAL startup time: {elapsed(t0)}")
 
     app.state.taxonomy        = taxonomy
@@ -302,7 +329,17 @@ def subgraph(req: GraphRequest):
         )
 
     nodes_of_interest = set(skills) | set(req.jd_skills)
-    nodes_in_G        = [n for n in nodes_of_interest if n in G]
+    nodes_in_G = [n for n in nodes_of_interest if n in G]
+
+    if len(nodes_in_G) < 5:
+        expanded = set(nodes_in_G)
+        for node in nodes_in_G:
+            neighbors = list(G.neighbors(node))
+            neighbors.sort(key=lambda n: G.degree(n), reverse=True)
+            expanded.update(neighbors[:4])
+            if len(expanded) >= 20:
+                break
+        nodes_in_G = list(expanded)[:20]
 
     if not nodes_in_G:
         return {"nodes": [], "edges": []}

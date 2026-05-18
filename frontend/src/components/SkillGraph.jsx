@@ -123,6 +123,7 @@ export default function SkillGraph({ candidateId, jdSkillString, missingSkills =
     const viewport = svg.append("g");
     const linkLayer = viewport.append("g");
     const nodeLayer = viewport.append("g");
+    const labelLayer = viewport.append("g");
     const tooltip = d3.select(tooltipRef.current);
 
     svg.call(
@@ -138,9 +139,8 @@ export default function SkillGraph({ candidateId, jdSkillString, missingSkills =
       .selectAll("line")
       .data(links)
       .join("line")
-      .attr("stroke", "#1a1a2e")
-      .attr("stroke-width", 1)
-      .attr("stroke-opacity", 0.6);
+      .attr("stroke", "rgba(255,255,255,0.08)")
+      .attr("stroke-width", 1);
 
     const node = nodeLayer
       .selectAll("circle")
@@ -200,6 +200,18 @@ export default function SkillGraph({ candidateId, jdSkillString, missingSkills =
           }),
       );
 
+    const label = labelLayer
+      .selectAll("text")
+      .data(nodes)
+      .join("text")
+      .attr("dy", "1.8em")
+      .attr("text-anchor", "middle")
+      .attr("font-size", "10px")
+      .attr("fill", "rgba(255,255,255,0.6)")
+      .attr("font-family", "JetBrains Mono, monospace")
+      .style("pointer-events", "none")
+      .text((d) => d.id);
+
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -207,11 +219,13 @@ export default function SkillGraph({ candidateId, jdSkillString, missingSkills =
         d3
           .forceLink(links)
           .id((d) => d.id)
-          .strength(0.3),
+          .distance(120)
+          .strength(0.5),
       )
-      .force("charge", d3.forceManyBody().strength(-120))
+      .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, graphHeight / 2))
-      .force("collision", d3.forceCollide().radius((d) => d.radius + 4))
+      .force("collision", d3.forceCollide().radius((d) => d.radius + 20))
+      .alphaDecay(0.01)
       .on("tick", () => {
         link
           .attr("x1", (d) => d.source.x)
@@ -220,6 +234,7 @@ export default function SkillGraph({ candidateId, jdSkillString, missingSkills =
           .attr("y2", (d) => d.target.y);
 
         node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+        label.attr("x", (d) => d.x).attr("y", (d) => d.y);
       });
 
     return () => {

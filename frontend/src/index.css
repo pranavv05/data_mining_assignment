@@ -39,6 +39,18 @@
   --purple: #a855f7;
   --text: #e2e8f0;
   --text-muted: #64748b;
+
+  /* Landing page tokens */
+  --void: #03030a;
+  --lp-surface: #080810;
+  --lp-card: #0d0d1a;
+  --lp-border: #16163a;
+  --lp-border-glow: rgba(0,212,255,0.2);
+  --lp-cyan: #00d4ff;
+  --lp-green: #00ff88;
+  --lp-amber: #ffb800;
+  --lp-red: #ff3055;
+  --lp-purple: #a855f7;
 }
 
 * {

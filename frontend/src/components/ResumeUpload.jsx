@@ -129,19 +129,25 @@ export default function ResumeUpload({ selectedJob, onRanked }) {
 
             {message && <div className="font-mono text-xs text-[var(--red)]">{message}</div>}
 
-            <Button
+            <button
               type="button"
               onClick={rankCandidates}
               disabled={loading}
               title={!canRank ? "Select a JD and add at least one candidate first" : ""}
-              className={`h-13 w-full font-mono text-sm uppercase tracking-[0.24em] ${
-                canRank
-                  ? "bg-gradient-to-r from-[var(--cyan)] to-[var(--green)] text-black shadow-[0_0_22px_rgba(0,212,255,0.18)] hover:shadow-[0_0_34px_rgba(0,255,136,0.3)]"
-                  : "bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]"
+              className={`h-13 w-full rounded-md font-bold uppercase transition-transform duration-150 ${
+                canRank && !loading ? "hover:scale-[1.02] active:scale-[0.99]" : "cursor-not-allowed opacity-40"
               }`}
+              style={{
+                background: "linear-gradient(135deg, #00d4ff, #00ff88)",
+                color: "#03030a",
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.875rem",
+                letterSpacing: "0.1em",
+                boxShadow: canRank && !loading ? "0 0 30px rgba(0,212,255,0.4)" : "none",
+              }}
             >
-              Rank Now
-            </Button>
+              RANK NOW
+            </button>
           </CardContent>
         </Card>
       </div>

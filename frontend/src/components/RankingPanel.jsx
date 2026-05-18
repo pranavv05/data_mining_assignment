@@ -42,7 +42,7 @@ function SignalRow({ label, value, active }) {
           style={{ width: `${pct(value)}%`, filter: active ? "drop-shadow(0 0 8px rgba(0,212,255,0.95))" : "none" }}
         />
       </div>
-      <div className="text-right font-mono text-xs text-[var(--text-muted)]">{Math.round(pct(value))}</div>
+      <div className="text-right font-mono text-xs text-[var(--text-muted)]">{Math.round(pct(value))}%</div>
     </div>
   );
 }
