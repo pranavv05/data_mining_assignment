@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 
 const gradeColors = {
   A: "#00ff88",
@@ -27,6 +29,11 @@ function ScoreBar({ score }) {
       />
     </div>
   );
+}
+
+function GLBModel({ modelPath }) {
+  const { scene } = useGLTF(modelPath);
+  return <primitive object={scene} scale={1.5} position={[0, -1.2, 0]} />;
 }
 
 export default function CharacterModel({ level = 1, grade = "D", score = 0 }) {
@@ -103,9 +110,14 @@ export default function CharacterModel({ level = 1, grade = "D", score = 0 }) {
             />
           </svg>
 
-          {/* Offline label */}
-          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--text-muted)]">
-            AWAITING_AGENT.GLB
+          {/* 3D character model */}
+          <div className="h-64 w-full">
+            <Canvas camera={{ position: [0, 0, 4], fov: 50 }}>
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[2, 3, 2]} intensity={1} />
+              <GLBModel modelPath="/model.glb" />
+              <OrbitControls enableZoom={false} enablePan={false} />
+            </Canvas>
           </div>
 
           {/* Grade badge */}
