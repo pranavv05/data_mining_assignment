@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+networkx==3.5
+pydantic
+scikit-learn
+sentence-transformers
